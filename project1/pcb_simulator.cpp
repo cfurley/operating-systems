@@ -5,10 +5,15 @@
 #include <set>
 #include <algorithm>
 
-// Define the PCB structure (YOU MUST IMPLEMENT THIS)
+// Definition of the PCB Structure.
 struct PCB {
-    // TODO: Add fields: pid, state, pc, total_work
-    // TODO: Add constructor PCB
+    int pid;
+    int pc;
+    std::string state;
+    int total_work;
+
+    PCB(int _pid, int _total_work)
+        : pid(_pid), pc(0), state("READY"), total_work(_total_work) {};
 };
 
 // Print states of all processes, sorted by PID (PROVIDED - DO NOT MODIFY)
@@ -23,7 +28,7 @@ void printProcessStates(const std::vector<PCB>& pcbs, int timeSlice) {
     std::cout << std::flush;
 }
 
-// Kernel simulator (YOU MUST IMPLEMENT THIS)
+// Kernel simulator
 void kernelSimulator(std::vector<PCB>& pcbs, int timeQuantum) {
     //Implement scheduling as decribed in the project 1 description
     //For each timed interrupt call printProcessStates
@@ -59,9 +64,10 @@ int main() {
         if (pids.count(pid) > 0) {
             std::cerr << "Error: Duplicate PID " << pid << " detected" << std::endl;
             return 1;
+        } else { // insert new job into the pcbs & pids data structures.
+            pcbs.emplace_back(PCB(pid,work));
+            pids.insert(pid);
         }
-        // TODO: Add check for unique PIDs (e.g insert pid into the set pids)
-        // TODO: Create PCB and add to pcbs (e.g., pcbs.emplace_back(pid, work))
     }
     
     int timeQuantum = 2;
