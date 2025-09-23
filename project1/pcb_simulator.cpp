@@ -13,7 +13,7 @@ struct PCB {
     int total_work;
 
     PCB(int _pid, int _total_work)
-        : pid(_pid), pc(0), state("READY"), total_work(_total_work) {};
+        : pid(_pid), pc(0), state("Ready"), total_work(_total_work) {};
 };
 
 // Print states of all processes, sorted by PID (PROVIDED - DO NOT MODIFY)
@@ -30,7 +30,71 @@ void printProcessStates(const std::vector<PCB>& pcbs, int timeSlice) {
 
 // Kernel simulator
 void kernelSimulator(std::vector<PCB>& pcbs, int timeQuantum) {
+//  printf("%d\n", ready_processes.front().pid);
+
+    // Create a Queue for Pointers to the Processes.
+    std::queue<PCB*> ready_processes;
+
+    // Place all processes in the queue with the "Ready" state.
+    for (PCB& pcb : pcbs) {
+        pcb.state = "Ready";
+        ready_processes.push(&pcb);
+    }
+
+    /* Run the processes for $timeQuantum amount of time. */
+
+    // while there are ready processes..
+    int interupt_counter = 0;
+    while (!(ready_processes.empty())) {
+        // Get the first process of the queue.
+        PCB* current_process = ready_processes.front();
+
+        // Pop that process from the queue.
+        ready_processes.pop();
+
+        // Set that process's state to "Running".
+        current_process->state = "Running";
+
+        // Run the current process for its allotted Quantum Time.
+        int current_quantum_work = 0;      
+        while(current_quantum_work < timeQuantum) { // While the process is running..
+
+
+            // run th
+
+            // Check if the process has more work to do.
+            if (current_process->pc < current_process->total_work) {
+                current_process->pc += 1; // increment the process program counter;
+            } else {
+                break; // process is completed, should break execution.
+            }
+
+            current_quantum_work += 1; // increment to reflect current work.
+        }
+
+        // Increment the 
+        interupt_counter += 1;
+
+        // Check if the process has completed execution.
+        if (current_process->total_work <= current_process->pc) {
+            // Set the process state to terminated.
+            current_process->state = "Terminated";
+        } else {
+            // Set the process state to ready.
+            current_process->state = "Ready";
+            // Push the process back into the queue.
+            ready_processes.push(current_process);
+        }
+
+        // Finally, print the state off the current processes.
+        printProcessStates(pcbs, interupt_counter); 
+    } //endwhile
+
+    
+
     //Implement scheduling as decribed in the project 1 description
+    pcbs[0].state = "Running";
+
     //For each timed interrupt call printProcessStates
     //You may create helper functions as needed
     //Add comments to describe your implementation of this function and/or other helper functions
