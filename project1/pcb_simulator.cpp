@@ -48,31 +48,24 @@ void kernelSimulator(std::vector<PCB>& pcbs, int timeQuantum) {
     while (!(ready_processes.empty())) {
         // Get the first process of the queue.
         PCB* current_process = ready_processes.front();
-
         // Pop that process from the queue.
         ready_processes.pop();
-
         // Set that process's state to "Running".
         current_process->state = "Running";
 
         // Run the current process for its allotted Quantum Time.
         int current_quantum_work = 0;      
         while(current_quantum_work < timeQuantum) { // While the process is running..
-
-
-            // run th
-
             // Check if the process has more work to do.
             if (current_process->pc < current_process->total_work) {
                 current_process->pc += 1; // increment the process program counter;
             } else {
                 break; // process is completed, should break execution.
             }
-
             current_quantum_work += 1; // increment to reflect current work.
         }
 
-        // Increment the 
+        // Increment the interupt counter, once the work is complete.
         interupt_counter += 1;
 
         // Check if the process has completed execution.
@@ -87,18 +80,10 @@ void kernelSimulator(std::vector<PCB>& pcbs, int timeQuantum) {
         }
 
         // Finally, print the state off the current processes.
-        printProcessStates(pcbs, interupt_counter); 
+        printProcessStates(pcbs, interupt_counter);
+
     } //endwhile
-
-    
-
-    //Implement scheduling as decribed in the project 1 description
-    pcbs[0].state = "Running";
-
-    //For each timed interrupt call printProcessStates
-    //You may create helper functions as needed
-    //Add comments to describe your implementation of this function and/or other helper functions
-}
+}//endfunc
 
 
 int main() {
