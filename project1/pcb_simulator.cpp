@@ -68,6 +68,10 @@ void kernelSimulator(std::vector<PCB>& pcbs, int timeQuantum) {
         // Increment the interupt counter, once the work is complete.
         interupt_counter += 1;
 
+
+        // Print the state off the current processes.
+        printProcessStates(pcbs, interupt_counter);
+
         // Check if the process has completed execution.
         if (current_process->total_work <= current_process->pc) {
             // Set the process state to terminated.
@@ -78,10 +82,7 @@ void kernelSimulator(std::vector<PCB>& pcbs, int timeQuantum) {
             // Push the process back into the queue.
             ready_processes.push(current_process);
         }
-
-        // Finally, print the state off the current processes.
-        printProcessStates(pcbs, interupt_counter);
-
+        // continue with process handling..
     } //endwhile
 }//endfunc
 
