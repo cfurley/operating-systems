@@ -35,8 +35,8 @@ void PCB::printObject()
  * scheduling when priorities are equal. The scheduler also prints out various
  * runtime statistics to std-out as specified within the project requirements.
  *
- * @param pcbs Vector of Process Control Blocks.
- * @param tq Time Quantum for round robin scheduling.
+ * @param pcbs Vector of Process Control Blocks
+ * @param tq Time Quantum for round robin scheduling
  */
 void priority_rr_scheduler(vector<PCB> pcbs, int tq)
 {
