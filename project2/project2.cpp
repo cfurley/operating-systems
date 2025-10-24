@@ -4,7 +4,7 @@
 
 using namespace std;
 
-// Structure to represent a process control block
+// Structure to represent a process control block.
 struct PCB
 {
     string id;
@@ -40,13 +40,35 @@ void PCB::printObject()
  */
 void priority_rr_scheduler(vector<PCB> pcbs, int tq)
 {
-    int tt = 0;     // total time, running the scheduler.
-    PCB *activePCB; // the actively running pcb on the cpu.
+    int tt = 0;                    // total time, running the scheduler.
+    vector<PCB *> pcb_ready_queue; // ptrs to pcbs ready to run.
+    PCB *active_pcb;               // ptr to activly running pcb.
 
     /* Run PP-RR Scheduler */
     while (!pcbs.empty())
     {
-        tt++; // increment total time.
+        /* Check for new process arrivals and push into the queue. */
+        for (PCB pcb : pcbs)
+        {
+            if (pcb.arrival_time == tt)
+            {
+                pcb_ready_queue.push_back(&pcb);
+                cout << "tt=" << tt;
+                pcb.printObject();
+            }
+        }
+
+        /* Select highest priority process */ // And round robin, how to implement?
+        /* Run the process for a single tq */
+        /* Update process the state variables */
+        /* Handle completion or re-queue process */
+
+        tt++; // increment total time each iteration.
+
+        /******************************************************************/
+        if (tt > 120) // REMOVE THIS LINE
+            break;    // REMOVE THIS LINE
+        /******************************************************************/
     }
 }
 
