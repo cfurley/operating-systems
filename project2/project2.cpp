@@ -31,31 +31,21 @@ void PCB::printObject()
 /**
  * @brief Priority Round Robin Scheduler.
  *
- * Implements a preemptive priority-based round robin scheduling algorithm.
- * The scheduler re-evaluates process priorities at each time quantum and
- * selects the highest priority process to run. When multiple processes have
- * the same priority, round robin scheduling is used to ensure fairness.
+ * A preemptive priority based pcb scheduler, which defaults to round robin
+ * scheduling when priorities are equal. The scheduler also prints out various
+ * runtime statistics to std-out as specified within the project requirements.
  *
- * @param pcbs Vector of Process Control Blocks to be scheduled
- * @param tq Time quantum for round robin scheduling
+ * @param pcbs Vector of Process Control Blocks.
+ * @param tq Time Quantum for round robin scheduling.
  */
 void priority_rr_scheduler(vector<PCB> pcbs, int tq)
 {
-    int tt = 0;    // total time, running the scheduler.
-    PCB activePCB; // the actively running pcb on the cpu.
+    int tt = 0;     // total time, running the scheduler.
+    PCB *activePCB; // the actively running pcb on the cpu.
 
     /* Run PP-RR Scheduler */
     while (!pcbs.empty())
     {
-        /* Handle interupts */
-        if (tt % tq == 0)
-        {
-            // interupt
-        }
-
-        /* Handle arrival times */
-        // if pcb->arrival >= tt : the process can run.
-
         tt++; // increment total time.
     }
 }
