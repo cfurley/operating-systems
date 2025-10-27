@@ -1,221 +1,252 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <algorithm>
 
 using namespace std;
 
 // Structure to represent a process control block.
 struct PCB
 {
-    string id;
-    int priority;
-    int burst_time;
-    int arrival_time;
-    int remaining_time;
-    int completion_time;
-    int remaining_quantum;
-    int start_time;
-    void printObject();
+    string id;           // Process identifier (P1, P2, etc.)
+    int priority;        // Process priority (higher number = higher priority)
+    int burst_time;      // Total CPU time needed
+    int arrival_time;    // Time when process arrives
+    int remaining_time;  // CPU time still needed
+    int completion_time; // Time when process finishes
+    int start_time;      // Time when process first runs
 };
-
-// Prints the PCB object to standard output.
-void PCB::printObject()
-{
-    cout << " ID:" << this->id;
-    cout << " Priority:" << this->priority;
-    cout << " Burst:" << this->burst_time;
-    cout << " Arrival:" << this->arrival_time;
-    cout << " Remaining:" << this->remaining_time;
-    cout << " Completion:" << this->completion_time;
-    cout << endl;
-}
 
 /**
  * @brief Priority Round Robin Scheduler.
  *
  * A preemptive priority based pcb scheduler, which defaults to round robin
- * scheduling when priorities are equal. The scheduler also prints out various
- * runtime statistics to std-out as specified within the project requirements.
+ * scheduling when priorities are equal.
  *
  * @param pcbs Vector of Process Control Blocks
  * @param tq Time Quantum for round robin scheduling
  */
-void priority_rr_scheduler(vector<PCB> pcbs, int tq)
+void priority_rr_scheduler(vector<PCB> &pcbs, int tq)
 {
-    int tt = 0;                    // total time, running the scheduler.
-    vector<PCB *> pcb_ready_queue; // ptrs to pcbs ready to run.
-    PCB *active_pcb = nullptr;     // ptr to activly running pcb.
-    int time_slice = 0;            // time slice counter for current process
-    int cpu_busy_time = 0;         // track CPU utilization
+    int tt = 0;                // Current time in the simulation
+    vector<PCB *> ready_queue; // Pointers to processes ready to run
+    PCB *active_pcb = NULL;    // Pointer to currently running process
+    int time_slice = 0;        // Time current process has been running
+    int cpu_busy_time = 0;     // Total time CPU has been busy
 
-    // Track schedule for output
-    vector<tuple<int, int, string, int>> schedule; // start, end, process_id, priority
-    int last_schedule_time = 0;
-    string last_process = "";
+    // Variables to track schedule output
+    int schedule_start = 0;       // Start time of current schedule block
+    string schedule_process = ""; // Process ID of current schedule block
 
-    /* Run PP-RR Scheduler */
+    // Main scheduler loop - continues until all processes complete
     while (true)
     {
-        /* Check for new process arrivals and push into the queue. */
-        for (size_t i = 0; i < pcbs.size(); i++)
+        // Check for new process arrivals at current time
+        for (int i = 0; i < pcbs.size(); i++)
         {
+            // If process arrives now and still has work to do
             if (pcbs[i].arrival_time == tt && pcbs[i].remaining_time > 0)
             {
-                pcb_ready_queue.push_back(&pcbs[i]);
-                pcbs[i].remaining_quantum = tq;
-                if (pcbs[i].start_time == -1)
-                {
-                    pcbs[i].start_time = tt;
-                }
+                // Add process to ready queue
+                ready_queue.push_back(&pcbs[i]);
 
-                // Check if new process should preempt current
-                if (active_pcb != nullptr && pcbs[i].priority > active_pcb->priority)
+                // Check if new process should preempt currently running process
+                if (active_pcb != NULL && pcbs[i].priority > active_pcb->priority)
                 {
-                    // Preempt current process
-                    pcb_ready_queue.push_back(active_pcb);
-                    active_pcb = nullptr;
-                    time_slice = 0;
+                    // New process has higher priority, so preempt current one
+                    ready_queue.push_back(active_pcb); // Put current back in queue
+                    active_pcb = NULL;                 // Clear active process
+                    time_slice = 0;                    // Reset time slice
                 }
             }
         }
 
-        /* Select highest priority process */
-        if (active_pcb == nullptr && !pcb_ready_queue.empty())
+        // If no process is running and queue is not empty, select one
+        if (active_pcb == NULL && ready_queue.size() > 0)
         {
-            // Find highest priority process
-            int max_priority_idx = 0;
-            for (size_t i = 1; i < pcb_ready_queue.size(); i++)
+            // Find the process with highest priority in ready queue
+            int max_priority_idx = 0; // Index of highest priority process
+            for (int i = 1; i < ready_queue.size(); i++)
             {
-                if (pcb_ready_queue[i]->priority > pcb_ready_queue[max_priority_idx]->priority)
+                // If this process has higher priority than current max
+                if (ready_queue[i]->priority > ready_queue[max_priority_idx]->priority)
                 {
-                    max_priority_idx = i;
+                    max_priority_idx = i; // Update index of max priority
                 }
             }
 
-            active_pcb = pcb_ready_queue[max_priority_idx];
-            pcb_ready_queue.erase(pcb_ready_queue.begin() + max_priority_idx);
+            // Set the highest priority process as active
+            active_pcb = ready_queue[max_priority_idx];
+
+            // Remove it from ready queue
+            ready_queue.erase(ready_queue.begin() + max_priority_idx);
+
+            // Reset time slice for new process
             time_slice = 0;
         }
 
-        /* Run the process for a single time unit */
-        if (active_pcb != nullptr)
+        // Execute one time unit of the active process
+        if (active_pcb != NULL)
         {
-            // Track schedule changes
-            if (last_process != active_pcb->id)
+            // Check if we're switching to a different process
+            if (schedule_process != active_pcb->id)
             {
-                if (!last_process.empty())
+                // Print previous schedule block if it exists
+                if (schedule_process != "")
                 {
-                    schedule.push_back(make_tuple(last_schedule_time, tt, last_process, -1));
+                    // Check if previous was Idle or a process
+                    if (schedule_process == "Idle")
+                    {
+                        // Print Idle without priority
+                        cout << "Time " << schedule_start << "-" << tt << ": Idle" << endl;
+                    }
+                    else
+                    {
+                        // Find priority of previous process
+                        int prev_priority = 0;
+                        for (int i = 0; i < pcbs.size(); i++)
+                        {
+                            if (pcbs[i].id == schedule_process)
+                            {
+                                prev_priority = pcbs[i].priority;
+                                break;
+                            }
+                        }
+                        // Print the schedule entry with priority
+                        cout << "Time " << schedule_start << "-" << tt << ": "
+                             << schedule_process << " (Priority " << prev_priority << ")" << endl;
+                    }
                 }
-                last_schedule_time = tt;
-                last_process = active_pcb->id;
+                // Start new schedule block
+                schedule_start = tt;
+                schedule_process = active_pcb->id;
             }
 
-            active_pcb->remaining_time--;
-            time_slice++;
-            cpu_busy_time++;
+            // Run process for one time unit
+            active_pcb->remaining_time--; // Decrease remaining time
+            time_slice++;                 // Increase time slice counter
+            cpu_busy_time++;              // CPU is busy
 
-            /* Handle completion or re-queue process */
+            // Check if process completed
             if (active_pcb->remaining_time == 0)
             {
-                // Process completed
-                active_pcb->completion_time = tt + 1;
-                active_pcb = nullptr;
-                time_slice = 0;
+                // Process is done
+                active_pcb->completion_time = tt + 1; // Record completion time
+                active_pcb = NULL;                    // Clear active process
+                time_slice = 0;                       // Reset time slice
             }
+            // Check if time quantum expired
             else if (time_slice >= tq)
             {
-                // Time quantum expired, re-queue
-                pcb_ready_queue.push_back(active_pcb);
-                active_pcb->remaining_quantum = tq;
-                active_pcb = nullptr;
-                time_slice = 0;
+                // Time quantum used up, re-queue the process
+                ready_queue.push_back(active_pcb); // Add to back of queue
+                active_pcb = NULL;                 // Clear active process
+                time_slice = 0;                    // Reset time slice
             }
         }
         else
         {
-            // CPU is idle
-            if (last_process != "Idle")
+            // CPU is idle (no process to run)
+            if (schedule_process != "Idle")
             {
-                if (!last_process.empty())
+                // Print previous schedule block if it exists
+                if (schedule_process != "")
                 {
-                    schedule.push_back(make_tuple(last_schedule_time, tt, last_process, -1));
+                    // Check if previous was Idle or a process
+                    if (schedule_process == "Idle")
+                    {
+                        // Print Idle without priority
+                        cout << "Time " << schedule_start << "-" << tt << ": Idle" << endl;
+                    }
+                    else
+                    {
+                        // Find priority of previous process
+                        int prev_priority = 0;
+                        for (int i = 0; i < pcbs.size(); i++)
+                        {
+                            if (pcbs[i].id == schedule_process)
+                            {
+                                prev_priority = pcbs[i].priority;
+                                break;
+                            }
+                        }
+                        // Print the schedule entry with priority
+                        cout << "Time " << schedule_start << "-" << tt << ": "
+                             << schedule_process << " (Priority " << prev_priority << ")" << endl;
+                    }
                 }
-                last_schedule_time = tt;
-                last_process = "Idle";
+                // Start idle period
+                schedule_start = tt;
+                schedule_process = "Idle";
             }
         }
 
-        tt++; // increment total time each iteration.
+        // Move time forward by one unit
+        tt++;
 
-        // Check if all processes are done
-        bool all_done = true;
-        for (const auto &p : pcbs)
+        // Check if all processes are complete
+        bool all_done = true; // Assume all done
+        for (int i = 0; i < pcbs.size(); i++)
         {
-            if (p.remaining_time > 0)
+            // If any process still has remaining time
+            if (pcbs[i].remaining_time > 0)
             {
-                all_done = false;
+                all_done = false; // Not all done
                 break;
             }
         }
-        if (all_done && pcb_ready_queue.empty() && active_pcb == nullptr)
+
+        // If all processes done and nothing in queue and nothing active
+        if (all_done && ready_queue.size() == 0 && active_pcb == NULL)
         {
-            break;
+            break; // Exit main loop
         }
     }
 
-    // Add final schedule entry
-    if (!last_process.empty())
+    // Print final schedule block
+    if (schedule_process != "")
     {
-        schedule.push_back(make_tuple(last_schedule_time, tt, last_process, -1));
-    }
-
-    // Print schedule with priorities
-    for (const auto &entry : schedule)
-    {
-        int start = get<0>(entry);
-        int end = get<1>(entry);
-        string proc_id = get<2>(entry);
-
-        if (proc_id == "Idle")
+        if (schedule_process == "Idle")
         {
-            cout << "Time " << start << "-" << end << ": Idle" << endl;
+            cout << "Time " << schedule_start << "-" << tt << ": Idle" << endl;
         }
         else
         {
-            // Find priority
-            int priority = 0;
-            for (const auto &p : pcbs)
+            // Find priority of last process
+            int last_priority = 0;
+            for (int i = 0; i < pcbs.size(); i++)
             {
-                if (p.id == proc_id)
+                if (pcbs[i].id == schedule_process)
                 {
-                    priority = p.priority;
+                    last_priority = pcbs[i].priority;
                     break;
                 }
             }
-            cout << "Time " << start << "-" << end << ": " << proc_id
-                 << " (Priority " << priority << ")" << endl;
+            // Print the schedule entry
+            cout << "Time " << schedule_start << "-" << tt << ": "
+                 << schedule_process << " (Priority " << last_priority << ")" << endl;
         }
     }
 
     // Print turnaround times
     cout << endl
          << "Turnaround Time" << endl;
-    for (const auto &p : pcbs)
+    for (int i = 0; i < pcbs.size(); i++)
     {
-        int turnaround = p.completion_time - p.arrival_time;
-        cout << p.id << " = " << turnaround << endl;
+        // Turnaround time = completion time - arrival time
+        int turnaround = pcbs[i].completion_time - pcbs[i].arrival_time;
+        cout << pcbs[i].id << " = " << turnaround << endl;
     }
 
     // Print waiting times
     cout << endl
          << "Waiting Time" << endl;
-    for (const auto &p : pcbs)
+    for (int i = 0; i < pcbs.size(); i++)
     {
-        int turnaround = p.completion_time - p.arrival_time;
-        int waiting = turnaround - p.burst_time;
-        cout << p.id << " = " << waiting << endl;
+        // Turnaround time = completion time - arrival time
+        int turnaround = pcbs[i].completion_time - pcbs[i].arrival_time;
+        // Waiting time = turnaround time - burst time
+        int waiting = turnaround - pcbs[i].burst_time;
+        cout << pcbs[i].id << " = " << waiting << endl;
     }
 
     // Print CPU utilization
@@ -224,31 +255,37 @@ void priority_rr_scheduler(vector<PCB> pcbs, int tq)
     cout << cpu_busy_time << "/" << tt << endl;
 }
 
-// main entry point, test the scheduler here.
-int main(int argc, char **argv)
+// main entry point
+int main()
 {
-    string line;
-    char dummy;
-    int time_quantum;
-    vector<PCB> processes;
+    string line;           // To read lines from input
+    char dummy;            // To read the 'q' character
+    int time_quantum;      // Time quantum for round robin
+    vector<PCB> processes; // Vector to store all processes
 
-    // Read time quantum from standard input
+    // Read time quantum from standard input (format: q <number>)
     cin >> dummy >> time_quantum;
 
     // Read processes from standard input
     while (cin >> line)
     {
-        PCB p;
-        p.id = line;
+        PCB p;       // Create new process
+        p.id = line; // Set process ID
+
+        // Read priority, burst time, and arrival time
         cin >> p.priority >> p.burst_time >> p.arrival_time;
+
+        // Initialize remaining time to burst time
         p.remaining_time = p.burst_time;
+
+        // Initialize completion time to -1 (not completed yet)
         p.completion_time = -1;
-        p.remaining_quantum = time_quantum;
-        p.start_time = -1;
+
+        // Add process to vector
         processes.push_back(p);
     }
 
-    /*** Run the scheduler. ***/
+    // Run the scheduler
     priority_rr_scheduler(processes, time_quantum);
 
     return 0;
